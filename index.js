@@ -11997,6 +11997,7 @@ var Editor = function(renderer, session) {
     };
     this.onCut = function() {
         this.commands.exec("cut", this);
+        this._signal('alphasheets-cut');
     };
     this.onPaste = function(text, event) {
         var e = {text: text, event: event};
