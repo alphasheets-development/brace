@@ -4121,7 +4121,13 @@ var KeyBinding = function(editor) {
         
         if (success) {
             this.$editor._signal("keyboardActivity", toExecute);
-        this.$editor._signal('alphasheets-text-change', this.$editor.textInput.$lastKeyDown);
+            var e = this.$editor.textInput.$lastKeyDown;
+            if (! 
+                ["ArrowRight", "ArrowLeft", "ArrowUp", "ArrowDown", "KeyA"]
+                .contains(e.code)
+                ) {
+                this.$editor._signal('alphasheets-text-change', e);
+            }
         }
         
 
