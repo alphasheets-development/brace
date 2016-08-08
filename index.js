@@ -4124,7 +4124,7 @@ var KeyBinding = function(editor) {
                 e.code == "ArrowRight"
                 || e.code == "ArrowLeft"
                 || e.code == "ArrowUp"
-                || e.code == "ArrowDown"]
+                || e.code == "ArrowDown"
                 || (e.code == "KeyA" && e.ctrlKey)
             );
         }
