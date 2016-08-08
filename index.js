@@ -4119,9 +4119,11 @@ var KeyBinding = function(editor) {
             success = commands.exec("insertstring", this.$editor, keyString);
         }
         
-        if (success)
+        if (success) {
             this.$editor._signal("keyboardActivity", toExecute);
         this.$editor._signal('alphasheets-text-change', this.$editor.textInput.$lastKeyDown);
+        }
+        
 
         return success;
     };
