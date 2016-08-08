@@ -4119,15 +4119,18 @@ var KeyBinding = function(editor) {
             success = commands.exec("insertstring", this.$editor, keyString);
         }
         
+        function isTextModifier(e) {
+            return !(
+                (["ArrowRight", "ArrowLeft", "ArrowUp", "ArrowDown"].contains(e.code))
+                || (e.code == "KeyA" && e.ctrlKey)
+            );
+        }
+
         if (success) {
             this.$editor._signal("keyboardActivity", toExecute);
             var e = this.$editor.textInput.$lastKeyDown;
-            if (! 
-                ["ArrowRight", "ArrowLeft", "ArrowUp", "ArrowDown", "KeyA"]
-                .contains(e.code)
-                ) {
+            if (isTextModifier(e))
                 this.$editor._signal('alphasheets-text-change', e);
-            }
         }
         
 
