@@ -14469,7 +14469,6 @@ var Cursor = function(parentEl) {
     this.getPixelPosition = function(position, onScreen) {
         if (!this.config || !this.session)
             return {left : 0, top : 0};
-        console.log(position);
         if (!position)
             position = this.session.selection.getCursor();
         var pos = this.session.documentToScreenPosition(position);
