@@ -8301,6 +8301,7 @@ var EditSession = function(text, mode) {
     this.$undoSelect = true;
 
     this.$foldData = [];
+    this.id = "session" + (++EditSession.$uid);
     this.$foldData.toString = function() {
         return this.join("\n");
     };
@@ -8497,7 +8498,7 @@ var EditSession = function(text, mode) {
         if (this.$syncInformUndoManager)
             this.$syncInformUndoManager();
     };
-    
+
     this.$defaultUndoManager = {
         undo: function() {},
         redo: function() {},
@@ -8766,7 +8767,7 @@ var EditSession = function(text, mode) {
     this.$onChangeMode = function(mode, $isPlaceholder) {
         if (!$isPlaceholder)
             this.$modeId = mode.$id;
-        if (this.$mode === mode) 
+        if (this.$mode === mode)
             return;
 
         this.$mode = mode;
@@ -8798,7 +8799,7 @@ var EditSession = function(text, mode) {
         this.tokenRe = mode.tokenRe;
         this.nonTokenRe = mode.nonTokenRe;
 
-        
+
         if (!$isPlaceholder) {
             if (mode.attachToSession)
                 mode.attachToSession(this);
@@ -8853,11 +8854,11 @@ var EditSession = function(text, mode) {
     };
     this.getScreenWidth = function() {
         this.$computeWidth();
-        if (this.lineWidgets) 
+        if (this.lineWidgets)
             return Math.max(this.getLineWidgetMaxWidth(), this.screenWidth);
         return this.screenWidth;
     };
-    
+
     this.getLineWidgetMaxWidth = function() {
         if (this.lineWidgetsWidth != null) return this.lineWidgetsWidth;
         var width = 0;
@@ -9121,7 +9122,7 @@ var EditSession = function(text, mode) {
             x.end.row += diff;
             return x;
         });
-        
+
         var lines = dir == 0
             ? this.doc.getLines(firstRow, lastRow)
             : this.doc.removeFullLines(firstRow, lastRow);
@@ -9276,7 +9277,7 @@ var EditSession = function(text, mode) {
         var lastRow = end.row;
         var len = lastRow - firstRow;
         var removedFolds = null;
-        
+
         this.$updating = true;
         if (len != 0) {
             if (action === "remove") {
@@ -9466,9 +9467,6 @@ var EditSession = function(text, mode) {
             displayed.join("")
                 .replace(/12/g, function() {
                     len -= 1;
-                })
-                .replace(/2/g, function() {
-                    len -= 1;
                 });
 
             if (!splits.length) {
@@ -9554,9 +9552,7 @@ var EditSession = function(text, mode) {
             } else if((c > 39 && c < 48) || (c > 57 && c < 64)) {
                 arr.push(PUNCTUATION);
             }
-            else if (c >= 0x1100 && isFullWidth(c)) {
-                arr.push(CHAR, CHAR_EXT);
-            } else {
+            else {
                 arr.push(CHAR);
             }
         }
@@ -9575,11 +9571,7 @@ var EditSession = function(text, mode) {
             if (c == 9) {
                 screenColumn += this.getScreenTabSize(screenColumn);
             }
-            else if (c >= 0x1100 && isFullWidth(c)) {
-                screenColumn += 2;
-            } else {
-                screenColumn += 1;
-            }
+            screenColumn += 1;
             if (screenColumn > maxScreenColumn) {
                 break;
             }
@@ -9592,7 +9584,7 @@ var EditSession = function(text, mode) {
     this.getRowLength = function(row) {
         if (this.lineWidgets)
             var h = this.lineWidgets[row] && this.lineWidgets[row].rowCount || 0;
-        else 
+        else
             h = 0
         if (!this.$useWrapMode || !this.$wrapData[row]) {
             return 1 + h;
@@ -9860,7 +9852,7 @@ var EditSession = function(text, mode) {
             if (!maxScreenColumn)
                 maxScreenColumn = Infinity;
             screenColumn = screenColumn || 0;
-            
+
             var c, column;
             for (column = 0; column < str.length; column++) {
                 c = str.charAt(column);
@@ -9873,11 +9865,11 @@ var EditSession = function(text, mode) {
                     break;
                 }
             }
-            
+
             return [screenColumn, column];
         };
     };
-    
+
     this.destroy = function() {
         if (this.bgTokenizer) {
             this.bgTokenizer.setDocument(null);
@@ -9962,7 +9954,7 @@ config.defineOptions(EditSession.prototype, "session", {
             return "off";
         },
         handlesSet: true
-    },    
+    },
     wrapMethod: {
         set: function(val) {
             val = val == "auto"
@@ -13601,7 +13593,7 @@ var Marker = function(parentEl) {
     this.setSession = function(session) {
         this.session = session;
     };
-    
+
     this.setMarkers = function(markers) {
         this.markers = markers;
     };
@@ -13626,10 +13618,13 @@ var Marker = function(parentEl) {
             var range = marker.range.clipRows(config.firstRow, config.lastRow);
             if (range.isEmpty()) continue;
 
+            var docRange = range;
             range = range.toScreenRange(this.session);
+            range.start.column = docRange.start.column;
+            range.end.column = docRange.end.column;
             if (marker.renderer) {
                 var top = this.$getTop(range.start.row, config);
-                var left = this.$padding + range.start.column * config.characterWidth;
+                var left = this.$padding + config.textWidth(range.start.row, range.start.column);
                 marker.renderer(html, range, left, top, config);
             } else if (marker.type == "fullLine") {
                 this.drawFullLineMarker(html, range, marker.clazz, config);
@@ -13659,7 +13654,7 @@ var Marker = function(parentEl) {
         var start = range.start.row;
         var end = range.end.row;
         var row = start;
-        var prev = 0; 
+        var prev = 0;
         var curr = 0;
         var next = session.getScreenLastRowColumn(row);
         var lineRange = new Range(row, range.start.column, row, curr);
@@ -13670,7 +13665,7 @@ var Marker = function(parentEl) {
             prev = curr;
             curr = next;
             next = row + 1 < end ? session.getScreenLastRowColumn(row + 1) : row == end ? 0 : range.end.column;
-            this.drawSingleLineMarker(stringBuilder, lineRange, 
+            this.drawSingleLineMarker(stringBuilder, lineRange,
                 clazz + (row == start  ? " ace_start" : "") + " ace_br"
                     + getBorderClass(row == start || row == start + 1 && range.start.column, prev < curr, curr > next, row == end),
                 layerConfig, row == end ? 0 : 1, extraStyle);
@@ -13679,6 +13674,9 @@ var Marker = function(parentEl) {
     this.drawMultiLineMarker = function(stringBuilder, range, clazz, config, extraStyle) {
         var padding = this.$padding;
         var height = config.lineHeight;
+        var textWidth = config.textWidth(range.start.row, range.start.column);
+        var left = padding + textWidth;
+        var width = config.width - textWidth;
         var top = this.$getTop(range.start.row, config);
         var left = padding + range.start.column * config.characterWidth;
         extraStyle = extraStyle || "";
@@ -13691,7 +13689,7 @@ var Marker = function(parentEl) {
             "left:", left, "px;", extraStyle, "'></div>"
         );
         top = this.$getTop(range.end.row, config);
-        var width = range.end.column * config.characterWidth;
+        var width = config.textWidth(range.end.row, range.end.column);
 
         stringBuilder.push(
             "<div class='", clazz, " ace_br12' style='",
@@ -13704,7 +13702,7 @@ var Marker = function(parentEl) {
         if (height <= 0)
             return;
         top = this.$getTop(range.start.row + 1, config);
-        
+
         var radiusClass = (range.start.column ? 1 : 0) | (range.end.column ? 0 : 8);
 
         stringBuilder.push(
@@ -13717,10 +13715,11 @@ var Marker = function(parentEl) {
     };
     this.drawSingleLineMarker = function(stringBuilder, range, clazz, config, extraLength, extraStyle) {
         var height = config.lineHeight;
-        var width = (range.end.column + (extraLength || 0) - range.start.column) * config.characterWidth;
+        var textWidth = config.textWidth(range.start.row, range.start.column);
+        var width = config.textWidth(range.start.row, range.start.column + (extraLength || 0)) - textWidth;
 
         var top = this.$getTop(range.start.row, config);
-        var left = this.$padding + range.start.column * config.characterWidth;
+        var left = this.$padding + textWidth;
 
         stringBuilder.push(
             "<div class='", clazz, "' style='",
@@ -13744,7 +13743,7 @@ var Marker = function(parentEl) {
             "left:0;right:0;", extraStyle || "", "'></div>"
         );
     };
-    
+
     this.drawScreenLineMarker = function(stringBuilder, range, clazz, config, extraStyle) {
         var top = this.$getTop(range.start.row, config);
         var height = config.lineHeight;
@@ -13813,7 +13812,7 @@ var Text = function(parentEl) {
     this.getCharacterWidth = function() {
         return this.$fontMetrics.$characterSize.width || 0;
     };
-    
+
     this.$setFontMetrics = function(measure) {
         this.$fontMetrics = measure;
         this.$fontMetrics.on("changeCharacterSize", function(e) {
@@ -14050,7 +14049,7 @@ var Text = function(parentEl) {
 
     this.$renderToken = function(stringBuilder, screenColumn, token, value) {
         var self = this;
-        var replaceReg = /\t|&|<|>|( +)|([\x00-\x1f\x80-\xa0\xad\u1680\u180E\u2000-\u200f\u2028\u2029\u202F\u205F\u3000\uFEFF\uFFF9-\uFFFC])|[\u1100-\u115F\u11A3-\u11A7\u11FA-\u11FF\u2329-\u232A\u2E80-\u2E99\u2E9B-\u2EF3\u2F00-\u2FD5\u2FF0-\u2FFB\u3000-\u303E\u3041-\u3096\u3099-\u30FF\u3105-\u312D\u3131-\u318E\u3190-\u31BA\u31C0-\u31E3\u31F0-\u321E\u3220-\u3247\u3250-\u32FE\u3300-\u4DBF\u4E00-\uA48C\uA490-\uA4C6\uA960-\uA97C\uAC00-\uD7A3\uD7B0-\uD7C6\uD7CB-\uD7FB\uF900-\uFAFF\uFE10-\uFE19\uFE30-\uFE52\uFE54-\uFE66\uFE68-\uFE6B\uFF01-\uFF60\uFFE0-\uFFE6]/g;
+        var replaceReg = /\t|&|<|( +)|([\x00-\x1f\x80-\xa0\xad\u1680\u180E\u2000-\u200f\u2028\u2029\u202F\u205F\u3000\uFEFF])/g;
         var replaceFunc = function(c, a, b, tabIdx, idx4) {
             if (a) {
                 return self.showInvisibles
@@ -14066,20 +14065,8 @@ var Text = function(parentEl) {
                 var tabSize = self.session.getScreenTabSize(screenColumn + tabIdx);
                 screenColumn += tabSize - 1;
                 return self.$tabStrings[tabSize];
-            } else if (c == "\u3000") {
-                var classToUse = self.showInvisibles ? "ace_cjk ace_invisible ace_invisible_space" : "ace_cjk";
-                var space = self.showInvisibles ? self.SPACE_CHAR : "";
-                screenColumn += 1;
-                return "<span class='" + classToUse + "' style='width:" +
-                    (self.config.characterWidth * 2) +
-                    "px'>" + space + "</span>";
             } else if (b) {
                 return "<span class='ace_invisible ace_invisible_space ace_invalid'>" + self.SPACE_CHAR + "</span>";
-            } else {
-                screenColumn += 1;
-                return "<span class='ace_cjk' style='width:" +
-                    (self.config.characterWidth * 2) +
-                    "px'>" + c + "</span>";
             }
         };
 
@@ -14089,13 +14076,60 @@ var Text = function(parentEl) {
             var classes = "ace_" + token.type.replace(/\./g, " ace_");
             var style = "";
             if (token.type == "fold")
-                style = " style='width:" + (token.value.length * this.config.characterWidth) + "px;' ";
+                style = " style='width:" + (value.length * this.config.characterWidth) + "px;' ";
             stringBuilder.push("<span class='", classes, "'", style, ">", output, "</span>");
         }
         else {
             stringBuilder.push(output);
         }
         return screenColumn + value.length;
+    };
+
+    this.$measureText = function(tokens, column) {
+        var stringBuilder = [];
+        var len = 0;
+        var i = 0;
+        var screenColumn = 0;
+        while (len < column && i < tokens.length) {
+            var token = tokens[i++];
+            var value = token.value;
+            len += value.length;
+            if (len > column)
+                value = value.substring(0, value.length - (len - column));
+
+            screenColumn = this.$renderToken(stringBuilder, screenColumn, token, value);
+        }
+        var el = document.createElement("div");
+        var style = el.style;
+        style.position = "absolute";
+        style.top = "-1000px";
+        el.className = "ace_line";
+        el.innerHTML = stringBuilder.join("");
+        this.element.appendChild(el);
+        var width = el.offsetWidth;
+        this.element.removeChild(el);
+
+        return width;
+    }
+
+    this.textWidth = function(row, column) {
+        var line = this.session.getTokens(row);
+        if (line.widthCache && line.widthCache[column]) {
+            if (line.widthCache.rowHeight == this.getLineHeight()) {
+                return line.widthCache[column];
+            }
+            else
+                delete line.widthCache;
+        }
+
+        var width = this.$measureText(line, column);
+
+        if (!line.widthCache)
+            line.widthCache = { rowHeight: this.getLineHeight() };
+
+        line.widthCache[column] = width;
+
+        return width;
     };
 
     this.renderIndentGuide = function(stringBuilder, value, max) {
@@ -14191,7 +14225,7 @@ var Text = function(parentEl) {
 
         if (!onlyContents) {
             stringBuilder.push(
-                "<div class='ace_line' style='height:", 
+                "<div class='ace_line' style='height:",
                     this.config.lineHeight * (
                         this.$useLineGroups() ? 1 :this.session.getRowLength(row)
                     ), "px'>"
@@ -14307,7 +14341,7 @@ var Cursor = function(parentEl) {
     this.element = dom.createElement("div");
     this.element.className = "ace_layer ace_cursor-layer";
     parentEl.appendChild(this.element);
-    
+
     if (isIE8 === undefined)
         isIE8 = !("opacity" in this.element.style);
 
@@ -14325,7 +14359,7 @@ var Cursor = function(parentEl) {
 };
 
 (function() {
-    
+
     this.$updateVisibility = function(val) {
         var cursors = this.cursors;
         for (var i = cursors.length; i--; )
@@ -14336,7 +14370,7 @@ var Cursor = function(parentEl) {
         for (var i = cursors.length; i--; )
             cursors[i].style.opacity = val ? "" : "0";
     };
-    
+
 
     this.$padding = 0;
     this.setPadding = function(padding) {
@@ -14406,7 +14440,7 @@ var Cursor = function(parentEl) {
         if (this.smoothBlinking) {
             dom.removeCssClass(this.element, "ace_smooth-blinking");
         }
-        
+
         update(true);
 
         if (!this.isBlinking || !this.blinkInterval || !this.isVisible)
@@ -14417,7 +14451,7 @@ var Cursor = function(parentEl) {
                 dom.addCssClass(this.element, "ace_smooth-blinking");
             }.bind(this));
         }
-        
+
         var blink = function(){
             this.timeoutId = setTimeout(function() {
                 update(false);
@@ -14435,15 +14469,18 @@ var Cursor = function(parentEl) {
     this.getPixelPosition = function(position, onScreen) {
         if (!this.config || !this.session)
             return {left : 0, top : 0};
-
+        console.log(position);
         if (!position)
             position = this.session.selection.getCursor();
         var pos = this.session.documentToScreenPosition(position);
-        var cursorLeft = this.$padding + pos.column * this.config.characterWidth;
+        var textWidth = this.config.textWidth(pos.row, position.column);
+        var cursorLeft = this.$padding + textWidth;
         var cursorTop = (pos.row - (onScreen ? this.config.firstRowScreen : 0)) *
             this.config.lineHeight;
+        var cursorWidth = (this.config.textWidth(pos.row, pos.column + 1)
+            - textWidth) || this.config.characterWidth;
 
-        return {left : cursorLeft, top : cursorTop};
+        return {left : cursorLeft, top : cursorTop, width: cursorWidth};
     };
 
     this.update = function(config) {
@@ -14464,11 +14501,11 @@ var Cursor = function(parentEl) {
             }
 
             var style = (this.cursors[cursorIndex++] || this.addCursor()).style;
-            
+
             if (!this.drawCursor) {
                 style.left = pixelPos.left + "px";
                 style.top = pixelPos.top + "px";
-                style.width = config.characterWidth + "px";
+                style.width = pixelPos.width + "px";
                 style.height = config.lineHeight + "px";
             } else {
                 this.drawCursor(style, pixelPos, config, selections[i], this.session);
@@ -14482,7 +14519,7 @@ var Cursor = function(parentEl) {
         this.$pixelPos = pixelPos;
         this.restartTimer();
     };
-    
+
     this.drawCursor = null;
 
     this.$setOverwrite = function(overwrite) {
@@ -15239,7 +15276,7 @@ var VirtualRenderer = function(container, theme) {
     this.$horizScroll = false;
     this.$vScroll = false;
 
-    this.scrollBar = 
+    this.scrollBar =
     this.scrollBarV = new VScrollBar(this.container, this);
     this.scrollBarH = new HScrollBar(this.container, this);
     this.scrollBarV.addEventListener("scroll", function(e) {
@@ -15283,13 +15320,14 @@ var VirtualRenderer = function(container, theme) {
         lastRow : 0,
         lineHeight : 0,
         characterWidth : 0,
+        textWidth: function() {return 1},
         minHeight : 1,
         maxHeight : 1,
         offset : 0,
         height : 1,
         gutterOffset: 1
     };
-    
+
     this.scrollMargin = {
         left: 0,
         right: 0,
@@ -15342,7 +15380,7 @@ var VirtualRenderer = function(container, theme) {
     this.setSession = function(session) {
         if (this.session)
             this.session.doc.off("changeNewLineMode", this.onChangeNewLineMode);
-            
+
         this.session = session;
         if (session && this.scrollMargin.top && session.getScrollTop() <= 0)
             session.setScrollTop(-this.scrollMargin.top);
@@ -15354,10 +15392,11 @@ var VirtualRenderer = function(container, theme) {
         this.$textLayer.setSession(session);
         if (!session)
             return;
-        
+
         this.$loop.schedule(this.CHANGE_FULL);
         this.session.$setFontMetrics(this.$fontMetrics);
-        
+        this.scrollBarV.scrollLeft = this.scrollBarV.scrollTop = null;
+
         this.onChangeNewLineMode = this.onChangeNewLineMode.bind(this);
         this.onChangeNewLineMode()
         this.session.doc.on("changeNewLineMode", this.onChangeNewLineMode);
@@ -15394,7 +15433,7 @@ var VirtualRenderer = function(container, theme) {
         this.$loop.schedule(this.CHANGE_TEXT);
         this.$textLayer.$updateEolChar();
     };
-    
+
     this.onChangeTabSize = function() {
         this.$loop.schedule(this.CHANGE_TEXT | this.CHANGE_MARKER);
         this.$textLayer.onChangeTabSize();
@@ -15433,7 +15472,7 @@ var VirtualRenderer = function(container, theme) {
             width = el.clientWidth || el.scrollWidth;
         var changes = this.$updateCachedSize(force, gutterWidth, width, height);
 
-        
+
         if (!this.$size.scrollerHeight || (!width && !height))
             return this.resizing = 0;
 
@@ -15449,7 +15488,7 @@ var VirtualRenderer = function(container, theme) {
             this.resizing = 0;
         this.scrollBarV.scrollLeft = this.scrollBarV.scrollTop = null;
     };
-    
+
     this.$updateCachedSize = function(force, gutterWidth, width, height) {
         height -= (this.$extraHeight || 0);
         var changes = 0;
@@ -15475,24 +15514,24 @@ var VirtualRenderer = function(container, theme) {
         if (width && (force || size.width != width)) {
             changes |= this.CHANGE_SIZE;
             size.width = width;
-            
+
             if (gutterWidth == null)
                 gutterWidth = this.$showGutter ? this.$gutter.offsetWidth : 0;
-            
+
             this.gutterWidth = gutterWidth;
-            
-            this.scrollBarH.element.style.left = 
+
+            this.scrollBarH.element.style.left =
             this.scroller.style.left = gutterWidth + "px";
-            size.scrollerWidth = Math.max(0, width - gutterWidth - this.scrollBarV.getWidth());           
-            
-            this.scrollBarH.element.style.right = 
+            size.scrollerWidth = Math.max(0, width - gutterWidth - this.scrollBarV.getWidth());
+
+            this.scrollBarH.element.style.right =
             this.scroller.style.right = this.scrollBarV.getWidth() + "px";
             this.scroller.style.bottom = this.scrollBarH.getHeight() + "px";
 
             if (this.session && this.session.getUseWrapMode() && this.adjustWrapLimit() || force)
                 changes |= this.CHANGE_FULL;
         }
-        
+
         size.$dirty = !width || !height;
 
         if (changes)
@@ -15603,7 +15642,7 @@ var VirtualRenderer = function(container, theme) {
         var style = this.$printMarginEl.style;
         style.left = ((this.characterWidth * this.$printMarginColumn) + this.$padding) + "px";
         style.visibility = this.$showPrintMargin ? "visible" : "hidden";
-        
+
         if (this.session && this.session.$wrap == -1)
             this.adjustWrapLimit();
     };
@@ -15675,7 +15714,7 @@ var VirtualRenderer = function(container, theme) {
         this.$loop.schedule(this.CHANGE_FULL);
         this.$updatePrintMargin();
     };
-    
+
     this.setScrollMargin = function(top, bottom, left, right) {
         var sm = this.scrollMargin;
         sm.top = top|0;
@@ -15718,12 +15757,12 @@ var VirtualRenderer = function(container, theme) {
         this.scrollBarH.setScrollWidth(this.layerConfig.width + 2 * this.$padding + this.scrollMargin.h);
         this.scrollBarH.setScrollLeft(this.scrollLeft + this.scrollMargin.left);
     };
-    
+
     this.$frozen = false;
     this.freeze = function() {
         this.$frozen = true;
     };
-    
+
     this.unfreeze = function() {
         this.$frozen = false;
     };
@@ -15735,8 +15774,8 @@ var VirtualRenderer = function(container, theme) {
         }
         if ((!this.session || !this.container.offsetWidth || this.$frozen) || (!changes && !force)) {
             this.$changes |= changes;
-            return; 
-        } 
+            return;
+        }
         if (this.$size.$dirty) {
             this.$changes |= changes;
             return this.onResize(true);
@@ -15744,7 +15783,7 @@ var VirtualRenderer = function(container, theme) {
         if (!this.lineHeight) {
             this.$textLayer.checkForSizeChanges();
         }
-        
+
         this._signal("beforeRender");
         var config = this.layerConfig;
         if (changes & this.CHANGE_FULL ||
@@ -15836,11 +15875,11 @@ var VirtualRenderer = function(container, theme) {
         this._signal("afterRender");
     };
 
-    
+
     this.$autosize = function() {
         var height = this.session.getScreenLength() * this.lineHeight;
         var maxHeight = this.$maxLines * this.lineHeight;
-        var desiredHeight = Math.min(maxHeight, 
+        var desiredHeight = Math.min(maxHeight,
             Math.max((this.$minLines || 1) * this.lineHeight, height)
         ) + this.scrollMargin.v + (this.$extraHeight || 0);
         if (this.$horizScroll)
@@ -15848,33 +15887,33 @@ var VirtualRenderer = function(container, theme) {
         if (this.$maxPixelHeight && desiredHeight > this.$maxPixelHeight)
             desiredHeight = this.$maxPixelHeight;
         var vScroll = height > maxHeight;
-        
+
         if (desiredHeight != this.desiredHeight ||
             this.$size.height != this.desiredHeight || vScroll != this.$vScroll) {
             if (vScroll != this.$vScroll) {
                 this.$vScroll = vScroll;
                 this.scrollBarV.setVisible(vScroll);
             }
-            
+
             var w = this.container.clientWidth;
             this.container.style.height = desiredHeight + "px";
             this.$updateCachedSize(true, this.$gutterWidth, w, desiredHeight);
             this.desiredHeight = desiredHeight;
-            
+
             this._signal("autosize");
         }
     };
-    
+
     this.$computeLayerConfig = function() {
         var session = this.session;
         var size = this.$size;
-        
+
         var hideScrollbars = size.height <= 2 * this.lineHeight;
         var screenLines = this.session.getScreenLength();
         var maxHeight = screenLines * this.lineHeight;
 
         var longestLine = this.$getLongestLine();
-        
+
         var horizScroll = !hideScrollbars && (this.$hScrollBarAlwaysVisible ||
             size.scrollerWidth - longestLine - 2 * this.$padding < 0);
 
@@ -15889,19 +15928,19 @@ var VirtualRenderer = function(container, theme) {
 
         var offset = this.scrollTop % this.lineHeight;
         var minHeight = size.scrollerHeight + this.lineHeight;
-        
+
         var scrollPastEnd = !this.$maxLines && this.$scrollPastEnd
             ? (size.scrollerHeight - this.lineHeight) * this.$scrollPastEnd
             : 0;
         maxHeight += scrollPastEnd;
-        
+
         var sm = this.scrollMargin;
         this.session.setScrollTop(Math.max(-sm.top,
             Math.min(this.scrollTop, maxHeight - size.scrollerHeight + sm.bottom)));
 
-        this.session.setScrollLeft(Math.max(-sm.left, Math.min(this.scrollLeft, 
+        this.session.setScrollLeft(Math.max(-sm.left, Math.min(this.scrollLeft,
             longestLine + 2 * this.$padding - size.scrollerWidth + sm.right)));
-        
+
         var vScroll = !hideScrollbars && (this.$vScrollBarAlwaysVisible ||
             size.scrollerHeight - maxHeight + scrollPastEnd < 0 || this.scrollTop > sm.top);
         var vScrollChanged = vScrollBefore !== vScroll;
@@ -15931,7 +15970,7 @@ var VirtualRenderer = function(container, theme) {
         offset = this.scrollTop - firstRowScreen * lineHeight;
 
         var changes = 0;
-        if (this.layerConfig.width != longestLine) 
+        if (this.layerConfig.width != longestLine)
             changes = this.CHANGE_H_SCROLL;
         if (hScrollChanged || vScrollChanged) {
             changes = this.$updateCachedSize(true, this.gutterWidth, size.width, size.height);
@@ -15939,7 +15978,7 @@ var VirtualRenderer = function(container, theme) {
             if (vScrollChanged)
                 longestLine = this.$getLongestLine();
         }
-        
+
         this.layerConfig = {
             width : longestLine,
             padding : this.$padding,
@@ -15948,10 +15987,11 @@ var VirtualRenderer = function(container, theme) {
             lastRow : lastRow,
             lineHeight : lineHeight,
             characterWidth : this.characterWidth,
+            textWidth: this.$textLayer.textWidth.bind(this.$textLayer),
             minHeight : minHeight,
             maxHeight : maxHeight,
             offset : offset,
-            gutterOffset : Math.max(0, Math.ceil((offset + size.height - size.scrollerHeight) / lineHeight)),
+            gutterOffset : lineHeight ? Math.max(0, Math.ceil((offset + size.height - size.scrollerHeight) / lineHeight)) : 0,
             height : this.$size.scrollerHeight
         };
 
@@ -16027,12 +16067,12 @@ var VirtualRenderer = function(container, theme) {
 
         var left = pos.left;
         var top = pos.top;
-        
+
         var topMargin = $viewMargin && $viewMargin.top || 0;
         var bottomMargin = $viewMargin && $viewMargin.bottom || 0;
-        
+
         var scrollTop = this.$scrollAnimation ? this.session.getScrollTop() : this.scrollTop;
-        
+
         if (scrollTop + topMargin > top) {
             if (offset && scrollTop + topMargin > top + this.lineHeight)
                 top -= offset * this.$size.scrollerHeight;
@@ -16117,10 +16157,10 @@ var VirtualRenderer = function(container, theme) {
         if (!this.$animatedScroll)
             return;
         var _self = this;
-        
+
         if (fromValue == toValue)
             return;
-        
+
         if (this.$scrollAnimation) {
             var oldSteps = this.$scrollAnimation.steps;
             if (oldSteps.length) {
@@ -16129,7 +16169,7 @@ var VirtualRenderer = function(container, theme) {
                     return;
             }
         }
-        
+
         var steps = _self.$calcSteps(fromValue, toValue);
         this.$scrollAnimation = {from: fromValue, to: toValue, steps: steps};
 
@@ -16194,16 +16234,45 @@ var VirtualRenderer = function(container, theme) {
         return {row: row, column: col, side: offset - col > 0 ? 1 : -1};
     };
 
+    this.$findColumn = function(row, width) {
+        var min = 0;
+        var max = this.session.getLine(row).length;
+
+        while (true) {
+            if (max <= 0)
+                return null;
+            if (max-min == 1) {
+                var wMin = this.$textLayer.textWidth(row, min);
+                var wMax = this.$textLayer.textWidth(row, max);
+
+                if (Math.abs(wMin-width) < Math.abs(wMax-width))
+                    return min;
+                else
+                    return max;
+            }
+            else {
+                var pivot = min + ((max - min) >> 1);
+                var w = this.$textLayer.textWidth(row, pivot, true);
+                if (w == width)
+                    return pivot;
+                else if (w > width)
+                    max = pivot;
+                else
+                    min = pivot;
+            }
+        }
+    };
+
     this.screenToTextCoordinates = function(x, y) {
         var canvasPos = this.scroller.getBoundingClientRect();
 
-        var col = Math.round(
-            (x + this.scrollLeft - canvasPos.left - this.$padding) / this.characterWidth
-        );
-
         var row = (y + this.scrollTop - canvasPos.top) / this.lineHeight;
+        var width = x + this.scroller.scrollLeft - canvasPos.left - this.$padding - dom.getPageScrollLeft();
+        var pos = this.session.screenToDocumentPosition(row, Math.max(col, 0));
+        var col = this.$findColumn(pos.row, width);
+        pos.column = col;
 
-        return this.session.screenToDocumentPosition(row, Math.max(col, 0));
+        return pos;
     };
     this.textToScreenCoordinates = function(row, column) {
         var canvasPos = this.scroller.getBoundingClientRect();
@@ -16262,8 +16331,8 @@ var VirtualRenderer = function(container, theme) {
         function afterLoad(module) {
             if (_self.$themeId != theme)
                 return cb && cb();
-            if (!module.cssClass)
-                return;
+            if (!module || !module.cssClass)
+                throw new Error("couldn't load module " + theme + " or it didn't call define");
             dom.importCssString(
                 module.cssText,
                 module.cssClass,
@@ -16273,7 +16342,7 @@ var VirtualRenderer = function(container, theme) {
             if (_self.theme)
                 dom.removeCssClass(_self.container, _self.theme.cssClass);
 
-            var padding = "padding" in module ? module.padding 
+            var padding = "padding" in module ? module.padding
                 : "padding" in (_self.theme || {}) ? 4 : _self.$padding;
             if (_self.$padding && padding != _self.$padding)
                 _self.setPadding(padding);
@@ -16300,7 +16369,7 @@ var VirtualRenderer = function(container, theme) {
     this.unsetStyle = function(style) {
         dom.removeCssClass(this.container, style);
     };
-    
+
     this.setCursorStyle = function(style) {
         if (this.scroller.style.cursor != style)
             this.scroller.style.cursor = style;
@@ -16341,7 +16410,7 @@ config.defineOptions(VirtualRenderer.prototype, "renderer", {
             this.$updatePrintMargin();
         },
         get: function() {
-            return this.$showPrintMargin && this.$printMarginColumn; 
+            return this.$showPrintMargin && this.$printMarginColumn;
         }
     },
     showGutter: {
