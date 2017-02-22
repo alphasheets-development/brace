@@ -13716,7 +13716,7 @@ var Marker = function(parentEl) {
     this.drawSingleLineMarker = function(stringBuilder, range, clazz, config, extraLength, extraStyle) {
         var height = config.lineHeight;
         var textWidth = config.textWidth(range.start.row, range.start.column);
-        var width = config.textWidth(range.start.row, range.start.column + (extraLength || 0)) - textWidth;
+        var width = config.textWidth(range.start.row, range.end.column + (extraLength || 0)) - textWidth;
 
         var top = this.$getTop(range.start.row, config);
         var left = this.$padding + textWidth;
