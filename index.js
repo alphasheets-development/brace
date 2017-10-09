@@ -16266,7 +16266,7 @@ var VirtualRenderer = function(container, theme) {
         var canvasPos = this.scroller.getBoundingClientRect();
 
         var row = (y + this.scrollTop - canvasPos.top) / this.lineHeight;
-        var width = x + this.scroller.scrollLeft - canvasPos.left - this.$padding - dom.getPageScrollLeft();
+        var width = x + this.scrollLeft - canvasPos.left - this.$padding - dom.getPageScrollLeft();
         var pos = this.session.screenToDocumentPosition(row, Math.max(col, 0));
         var col = this.$findColumn(pos.row, width);
         pos.column = col;
