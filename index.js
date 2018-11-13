@@ -2307,17 +2307,13 @@ var TextInput = function(parentNode, host) {
     var syncComposition = lang.delayedCall(onCompositionUpdate, 50);
 
     event.addListener(text, "compositionstart", onCompositionStart);
-    if (useragent.isGecko) {
-        event.addListener(text, "text", function(){syncComposition.schedule()});
-    } else {
-        event.addListener(text, "keyup", function(e){
-            host._emit("keyup", e);
-            syncComposition.schedule()
-        });
-        event.addListener(text, "keydown", function(e){
-            syncComposition.schedule();
-        });
-    }
+    event.addListener(text, "keyup", function(e){
+        host._emit("keyup", e);
+        syncComposition.schedule()
+    });
+    event.addListener(text, "keydown", function(e){
+        syncComposition.schedule();
+    });
     event.addListener(text, "compositionend", onCompositionEnd);
 
     this.getElement = function() {
@@ -18823,8 +18819,7 @@ exports.createEditSession = function(text, mode) {
 exports.EditSession = EditSession;
 exports.UndoManager = UndoManager;
 exports.version = "1.2.3";
-});
-            (function() {
+});            (function() {
                 ace.acequire(["ace/ace"], function(a) {
                     a && a.config.init(true);
                     if (!window.ace)

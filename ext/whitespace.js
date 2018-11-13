@@ -178,8 +178,7 @@ exports.commands = [{
     }
 }];
 
-});
-                (function() {
+});                (function() {
                     ace.acequire(["ace/ext/whitespace"], function() {});
                 })();
             

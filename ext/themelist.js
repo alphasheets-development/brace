@@ -53,8 +53,7 @@ exports.themes = themeData.map(function(data) {
     return theme;
 });
 
-});
-                (function() {
+});                (function() {
                     ace.acequire(["ace/ext/themelist"], function() {});
                 })();
             

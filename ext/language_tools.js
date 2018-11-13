@@ -1934,8 +1934,7 @@ acequire("../config").defineOptions(Editor.prototype, "editor", {
         value: false
     }
 });
-});
-                (function() {
+});                (function() {
                     ace.acequire(["ace/ext/language_tools"], function() {});
                 })();
             
